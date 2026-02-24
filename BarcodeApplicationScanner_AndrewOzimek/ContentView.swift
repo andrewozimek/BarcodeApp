@@ -1,24 +1,43 @@
-//
-//  ContentView.swift
-//  BarcodeApplicationScanner_AndrewOzimek
-//
-//  Created by Ozimek, Andrew R. on 2/18/26.
-//
-
 import SwiftUI
-
 struct ContentView: View {
+    @State private var resultText = "Scan a product to begin"
+    @State private var showingScanner = false
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Scan This!")
+        VStack(spacing: 30) {
+            Text(resultText)
+                .font(.title2)
+                .padding()
+            
+            Button(action: { showingScanner = true }) {
+                Label("Scan Item", systemImage: "barcode.viewfinder")
+                    .font(.headline)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
+            }
+            .padding(.horizontal)
         }
-        .padding()
+        .sheet(isPresented: $showingScanner) {
+#if os(iOS)
+    if #available(iOS 16.0, *) {
+        #if targetEnvironment(simulator)
+        // Use the safe SwiftUI wrapper on Simulator to avoid VisionKit
+        DataScannerView(scannedCode: $resultText)
+        #else
+        // Use the real scanner on device
+        LegacyDataScannerView(scannedCode: $resultText)
+        #endif
+    } else {
+        // Fallback UI for older iOS versions
+        DataScannerView(scannedCode: $resultText)
     }
-}
-
-#Preview {
-    ContentView()
+#else
+    // Non-iOS platforms
+    DataScannerView(scannedCode: $resultText)
+#endif
+        }
+    }
 }
